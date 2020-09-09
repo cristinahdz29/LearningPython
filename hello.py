@@ -6,9 +6,9 @@
 # caclculate tip function
 
 def calculate_tip(total_cost, percentage):
-    tip = total_cost * (percentage/100)
-    return tip
+    return total_cost * (percentage/100)
+    
 
 
-print(calculate_tip(100, 10)
+tip = calculate_tip(100, 10)
 print(tip)
