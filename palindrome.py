@@ -1,14 +1,28 @@
 
 # using predefined function to reverse to string
 
-def palindrome():
-    s = input("Give me a word: ")
-    if(s == s[:: -1]):
-        print("is a palindrome")
-    else:
-        print("is not a palindrome")
+# def palindrome():
+#     string = input("Give me a word: ")
+#     if(string == string[:: -1]):
+#         print("is a palindrome")
+#     else:
+#         print("is not a palindrome")
 
-palindrome()
+# palindrome()
+
+def palindrome():
+    string = input("Give me a word: ")
+    new_string = []
+    for i in range(len(string)-1, -1, -1):
+        new_string.append(string[i])
+    updated_string = ''.join(new_string)
+    if string == updated_string:
+        return "This is a palindrome"
+    else:
+        return "This is not a palindrome"
+    
+
+print(palindrome())
 
 
 # check if both strings are equal
