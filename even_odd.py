@@ -1,11 +1,16 @@
-
+# WE HAVE TO WRITE AN APP WHERE WE GET INPUT FROM THE USER, DETERMINE IF EVEN OR ODD, THEN DISPLAY A MESSAGE IF ITS EVEN OR ODD
+# STEP 1: CREATE A FUNCTION; FUNCTION WILL NOT TAKE IN ANY PARAMETERS BECAUSE WERE GETTTING IT FROM THE INPUT FUNCTION WITHIN THE MAIN FUNCTION AND CAN THEN BE ACCESSED
+# STEP 2: USE INPUT FUNCTION TO GET A NUMBER FROM THE USER, YOU HAVE TO PUT IN THE 'INT' FUNCTION IN FRONT OF THE INPUT FUNCTION BECAUSE ALL INPUTS ARE STRINGS, AND WE NEED TO CONVERT IT TO AN INTEGER TO PERFORM MATH OPERATIONS WITH IT
+# STEP 3: DETERMINE IF ITS EVEN, SO IF THE NUMBER THE USER INPUT DOES NOT HAVE A REMAINEDER WHEN USE % 2, THEN IT IS EVEN, IF IT IS NOT == TO 0 THEN IT IS ODD
 def even_odd():
-    number = input("Tell me a number")
-    even = int(number) % 2
+    print("Let's determine if a number is odd or even!")
+    print("")
+    number = int(input("First, tell me a number: "))
+    print("")
 
-    if even == 0:
-        print('Your number is even')
+    if number % 2 == 0:
+        print(f"{number} is an even number!")
     else:
-        print('Your number is odd')
+        print(f"{number} is an odd number!")
 
 even_odd()
