@@ -21,14 +21,32 @@
 # 3. If table is occupied, show start time and duration of play in minutes
 
 ###############################
+# MADE A SET AMOUNT OF TABLES BECAUSE I KNOW I WILL ONLY NEED 12
+
+from datetime import datetime, timedelta
+import math
+
 amountOfTables = 12
+
+# EMPTY LIST SO I CAN APPEND TABLES TOO
 listOfTables = []
+
+def formatDate(date):
+    if date == None:
+        return None
+    return date.strftime('%I:%M %p')
+
 
 
 class Table:
     def __init__(self, tableId):
         self.id = tableId
         self.occupied = False
+        self.startTime = None
+        self.endTime = None
+        self.timePlayed = 0
+        self.pricePerMin = 0.5
+        self.totalCost = 0
 
     def occupiedName(self):
         if self.occupied:
@@ -36,15 +54,44 @@ class Table:
         else:
             return "Open"
 
+    def checkOut(self):
+        self.occupied = True
+        self.startTime = datetime.now()
+
+    def checkIn(self):
+        self.occupied = False
+        self.endTime = datetime.now()
+
+    def calcTimePlayed(self):
+        timeDiff = self.endTime - self.startTime
+        timeDiffInSeconds = timeDiff.total_seconds()
+        self.timePlayed = math.ceil(timeDiffInSeconds / 60)
+
+    def printTimePlayed(self):
+        timeDIffInHours = self.timePlayed / 60
+        if timeDIffInHours > 1:
+            return f"{timeDIffInHours} hours"
+        else:
+            return f"{self.timePlayed} minutes"
+
+    def calcCost(self):
+        self.totalCost = '${:,.2f}'.format(self.pricePerMin * self.timePlayed)
+
     # make function inside of table that will help us with the occupied property
 
     def tableStatus(self):
         tableStatus = True
         while tableStatus:
-            print(f"You have selected Table {self.id} - {self.occupiedName()}")
+            print(
+                f"""
+You have selected Table {self.id} - {self.occupiedName()}
+    - Start Time: - {formatDate(self.startTime)}
+    - End Time: {formatDate(self.endTime)}
+    - Time Played: {self.printTimePlayed()}
+    - Cost: {self.totalCost}""")
             print("")
-            print(" - Press 1 to occupy table ")
-            print(" - Press 2 to open table")
+            print(" - Press 1 to check out table ")
+            print(" - Press 2 to check in table")
             print(" - Press q to quit ")
             print("")
             userInput = input("Make a selection: ")
@@ -54,36 +101,24 @@ class Table:
                     print("This table is taken")
                     print("")
                 else:
-                    self.occupied = True
+                    self.checkOut()
             elif userInput == "2":
-                self.occupied = False
+                self.checkIn()
+                self.calcTimePlayed()
+                self.calcCost()
             elif userInput == "q":
                 tableStatus = False
             else:
                 print("Your entry is invalid. Please enter 1, 2, or q")
 
-# def isOccupied():
-#     table.occupied = True
-
-# Function to create tables
-# def createTables():
-#     for i in range(0, amountOfTables):
-#         table = Table(i + 1)
-#         listOfTables.append(table)
-    # print(listOfTables)
-
-# Function to view tables
-# I also need to see:
-    # occupied or not
-    # start time
-    # end time
-    # total time
+# FUNCTIONS OUTSIDE OF MY CLASS OF TABLE (WHICH WILL HAVE PROPERTIES FOR TABLE)
+# The list contains a list of objects, and each object contains the properties of the Table class, which is why we can do dot notation
 
 
 def viewTables():
     for i in range(len(listOfTables)):
         table = listOfTables[i]
-        print(f"{i +1} - Table {table.id} - {table.occupiedName()}")
+        print(f"{i +1} - Table {table.id} - {table.occupiedName()} - Start Time: {formatDate(table.startTime)} - End Time: {formatDate(table.endTime)} - Time Played: {table.printTimePlayed()} - Cost: {table.totalCost}")
 
 
 def selectTable():
@@ -94,6 +129,9 @@ def selectTable():
     table = listOfTables[userInput - 1]
     table.tableStatus()
 
+# FUNCTION TO CREATE TABLES
+# FOR i, it will run through the class, then append those objects to the empty list of tables
+
 
 def createTables():
     for i in range(0, amountOfTables):
@@ -101,6 +139,9 @@ def createTables():
         listOfTables.append(table)
 
 
+# MAIN LOOP THAT PRINTS OUT STARTING MENU
+# DEPENDING ON THE USER INPUT, IT WILL RUN DIFFERENT FUNCTIONS DEFINED ABOVE
+# BEFORE WHILE LOOP, I CREATED MY TABLES WITH THE createTables(), BECAUSE I ONLY WANT THIS DONE ONCE, NOT EVERY TIME THE WHILE LOOP RUNS
 whileRunning = True
 print("Initializing Pool Table Management Software....")
 createTables()
