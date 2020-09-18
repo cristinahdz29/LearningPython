@@ -25,11 +25,13 @@
 
 from datetime import datetime, timedelta
 import math
+import os
 
 amountOfTables = 12
 
 # EMPTY LIST SO I CAN APPEND TABLES TOO
 listOfTables = []
+
 
 def formatDate(date):
     if date == None:
@@ -37,16 +39,69 @@ def formatDate(date):
     return date.strftime('%I:%M %p')
 
 
+def getFileName():
+    currentTime = datetime.now()
+    return f"{currentTime.month}-{currentTime.day}-{currentTime.year}.txt"
+
+
+class Record:
+    def __init__(self, startTime, tableId, recordId):
+        self.startTime = startTime
+        self.tableId = tableId
+        self.recordId = recordId
+        self.endTime = None
+        self.timePlayed = 0
+        self.totalCost = 0
+
+    def calcTotalCost(self, pricePerMin):
+        self.totalCost = '${:,.2f}'.format(pricePerMin * self.timePlayed)
+        self.updateRecordFile(5, self.totalCost)
+
+    def calcTimePlayed(self):
+        timeDiff = self.endTime - self.startTime
+        timeDiffInSeconds = timeDiff.total_seconds()
+        self.timePlayed = math.ceil(timeDiffInSeconds / 60)
+        self.updateRecordFile(4, self.timePlayed)
+
+    def createRecordInFile(self):
+        f = open(getFileName(), "a")
+        f.write(
+            f"{self.tableId},{self.recordId},{self.startTime.strftime('%Y-%m-%d %H:%M:%S')},None,0,0")
+        f.write(",\n")
+        f.close()
+
+    def setEndTime(self):
+        self.endTime = datetime.now()
+        self.updateRecordFile(3, self.endTime.strftime('%Y-%m-%d %H:%M:%S'))
+
+    def updateRecordFile(self, index, value):
+        newData = []
+        with open(getFileName(), 'r') as file:
+            # read a list of lines into data
+            data = file.readlines()
+        for rec in data:
+            recList = rec.split(',')
+            if int(recList[0]) == self.tableId and int(recList[1]) == self.recordId:
+                recList[index] = str(value)
+            recString = ','.join(recList)
+            newData.append(recString)
+        with open(getFileName(), 'w') as file:
+            file.writelines(newData)
+
+    def printTimePlayed(self):
+        timeDIffInHours = self.timePlayed / 60
+        if timeDIffInHours > 1:
+            return f"{timeDIffInHours} hours"
+        else:
+            return f"{self.timePlayed} minutes"
+
 
 class Table:
     def __init__(self, tableId):
         self.id = tableId
         self.occupied = False
-        self.startTime = None
-        self.endTime = None
-        self.timePlayed = 0
         self.pricePerMin = 0.5
-        self.totalCost = 0
+        self.recordList = []
 
     def occupiedName(self):
         if self.occupied:
@@ -56,42 +111,33 @@ class Table:
 
     def checkOut(self):
         self.occupied = True
-        self.startTime = datetime.now()
+        startTime = datetime.now()
+        record = Record(startTime, self.id, len(self.recordList))
+        record.createRecordInFile()
+        self.recordList.append(record)
 
     def checkIn(self):
+        record = self.recordList[len(self.recordList) - 1]
+        record.setEndTime()
+        record.calcTimePlayed()
+        record.calcTotalCost(self.pricePerMin)
         self.occupied = False
-        self.endTime = datetime.now()
 
-    def calcTimePlayed(self):
-        timeDiff = self.endTime - self.startTime
-        timeDiffInSeconds = timeDiff.total_seconds()
-        self.timePlayed = math.ceil(timeDiffInSeconds / 60)
-
-    def printTimePlayed(self):
-        timeDIffInHours = self.timePlayed / 60
-        if timeDIffInHours > 1:
-            return f"{timeDIffInHours} hours"
-        else:
-            return f"{self.timePlayed} minutes"
-
-    def calcCost(self):
-        self.totalCost = '${:,.2f}'.format(self.pricePerMin * self.timePlayed)
+    def viewRecords(self):
+        for i in range(len(self.recordList)):
+            record = self.recordList[i]
+            print(f"{i +1} - Start Time: {formatDate(record.startTime)} - End Time: {formatDate(record.endTime)} - Time Played: {record.printTimePlayed()} - Cost: {record.totalCost}")
 
     # make function inside of table that will help us with the occupied property
 
     def tableStatus(self):
         tableStatus = True
         while tableStatus:
-            print(
-                f"""
-You have selected Table {self.id} - {self.occupiedName()}
-    - Start Time: - {formatDate(self.startTime)}
-    - End Time: {formatDate(self.endTime)}
-    - Time Played: {self.printTimePlayed()}
-    - Cost: {self.totalCost}""")
+            print(f"You have selected Table {self.id} - {self.occupiedName()}")
             print("")
             print(" - Press 1 to check out table ")
             print(" - Press 2 to check in table")
+            print(" - Press 3 to view table records")
             print(" - Press q to quit ")
             print("")
             userInput = input("Make a selection: ")
@@ -104,8 +150,8 @@ You have selected Table {self.id} - {self.occupiedName()}
                     self.checkOut()
             elif userInput == "2":
                 self.checkIn()
-                self.calcTimePlayed()
-                self.calcCost()
+            elif userInput == "3":
+                self.viewRecords()
             elif userInput == "q":
                 tableStatus = False
             else:
@@ -118,7 +164,7 @@ You have selected Table {self.id} - {self.occupiedName()}
 def viewTables():
     for i in range(len(listOfTables)):
         table = listOfTables[i]
-        print(f"{i +1} - Table {table.id} - {table.occupiedName()} - Start Time: {formatDate(table.startTime)} - End Time: {formatDate(table.endTime)} - Time Played: {table.printTimePlayed()} - Cost: {table.totalCost}")
+        print(f"{i +1} - Table {table.id} - {table.occupiedName()}")
 
 
 def selectTable():
@@ -138,13 +184,33 @@ def createTables():
         table = Table(i + 1)
         listOfTables.append(table)
 
+def findOrCreateFile():
+    f = open(getFileName(), "a")
+    f.close()
+
+def readFileRecords():
+    f = open(getFileName(), "r")
+    for x in f:
+        recordData = x.split(',')
+        table = listOfTables[int(recordData[0]) - 1]
+        record = Record(datetime.strptime(recordData[2], '%Y-%m-%d %H:%M:%S'), recordData[0], recordData[1])
+        if recordData[3] != 'None':
+            record.endTime = datetime.strptime(recordData[3], '%Y-%m-%d %H:%M:%S')
+        record.timePlayed = int(recordData[4])
+        record.totalCost = recordData[5]
+        table.recordList.append(record)
+    f.close()
+
+
 
 # MAIN LOOP THAT PRINTS OUT STARTING MENU
 # DEPENDING ON THE USER INPUT, IT WILL RUN DIFFERENT FUNCTIONS DEFINED ABOVE
 # BEFORE WHILE LOOP, I CREATED MY TABLES WITH THE createTables(), BECAUSE I ONLY WANT THIS DONE ONCE, NOT EVERY TIME THE WHILE LOOP RUNS
 whileRunning = True
 print("Initializing Pool Table Management Software....")
+findOrCreateFile()
 createTables()
+readFileRecords()
 while whileRunning:
     print("")
     print("Choose one of the following options: ")
